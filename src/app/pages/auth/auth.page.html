@@ -40,6 +40,10 @@
             Ingresar
         </ion-button>
 
+                <ion-text color="danger" *ngIf="errorMsg" style="display:block; margin-top:12px; text-align:center;">
+                    {{ errorMsg }}
+                </ion-text>
+
         </form>
 
 </div>    

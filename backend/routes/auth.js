@@ -1,46 +1,122 @@
 const express = require('express');
 const router = express.Router();
-const conexion = require('proyecto-web-diaulofood/backend/index.js');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const db = require('../db');
 
-/*registro
-router.post('/register', (req, res) => {
-    const { rut, nombre_usuario, email, region, comuna, contrasena, id_rol } = req.body;
+const auth = require('../middleware/auth');
 
-    if (!rut || !nombre_usuario || !email || !region || !comuna || !contrasena || !id_rol) {
-        return res.status(400).json({ mensaje: 'Faltan datos obligatorios' });
+// GET /api/auth/health - diagnóstico rápido
+router.get('/health', async (_req, res) => {
+    try {
+        const [[rolesCountRow]] = await db.query('SELECT COUNT(*) AS roles FROM roles');
+        const [[usersCountRow]] = await db.query('SELECT COUNT(*) AS usuarios FROM usuarios');
+        return res.json({
+            ok: true,
+            db: 'connected',
+            counts: {
+                roles: rolesCountRow.roles,
+                usuarios: usersCountRow.usuarios
+            }
+        });
+    } catch (err) {
+        console.error('Health error:', err);
+        return res.status(500).json({ ok: false, mensaje: 'DB error', code: err.code, sqlMessage: err.sqlMessage });
     }
+});
 
-    const sql = 'INSERT INTO Usuarios (rut, nombre_usuario, email, region, comuna, contrasena, id_rol) VALUES (?, ?, ?, ?, ?, ?, ?)';
-    conexion.query(sql, [rut, nombre_usuario, email, region, comuna, contrasena, id_rol], (err, result) => {
-        if (err) {
-            console.error('Error al registrar usuario:', err);
-            return res.status(500).json({ mensaje: 'Error en el servidor' });
-        }
-        res.status(201).json({ mensaje: 'Usuario registrado correctamente' });
-    });
-});*/
-
-
-router.post('/login', (req, res) => {
-    const { email, contrasena } = req.body;
-
-    if (!email || !contrasena) {
-        return res.status(400).json({ mensaje: 'Faltan credenciales' });
+// Ejemplo de ruta protegida por JWT
+router.get('/me', auth, async (req, res) => {
+    try {
+        const userId = req.user.sub;
+        const [rows] = await db.query(
+            'SELECT u.id_usuario, u.nombre, u.email, r.nombre_rol AS rol FROM usuarios u INNER JOIN roles r ON r.id_rol = u.id_rol WHERE u.id_usuario = ? LIMIT 1',
+            [userId]
+        );
+        if (!rows.length) return res.status(404).json({ mensaje: 'Usuario no encontrado' });
+        return res.json(rows[0]);
+    } catch (err) {
+        console.error('ME error:', err);
+        return res.status(500).json({ mensaje: 'Error en el servidor' });
     }
+});
 
-    const sql = 'SELECT * FROM Usuarios WHERE email = ? AND contrasena = ?';
-    conexion.query(sql, [email, contrasena], (err, results) => {
-        if (err) {
-            console.error('Error al iniciar sesión:', err);
-            return res.status(500).json({ mensaje: 'Error en el servidor' });
+// POST /api/auth/register (uso básico para crear usuarios)
+router.post('/register', async (req, res) => {
+    try {
+        const { nombre, email, contrasena, rol } = req.body;
+        if (!nombre || !email || !contrasena) {
+            return res.status(400).json({ mensaje: 'Faltan datos (nombre, email, contrasena)' });
         }
 
-        if (results.length > 0) {
-            res.status(200).json({ mensaje: 'Inicio de sesión exitoso', usuario: results[0] });
-        } else {
-            res.status(401).json({ mensaje: 'Credenciales incorrectas' });
+        // Rol por defecto 'usuario'
+        const rolNombre = (rol || 'usuario').toLowerCase();
+
+        const [exists] = await db.query('SELECT 1 FROM usuarios WHERE email = ? LIMIT 1', [email]);
+        if (exists.length > 0) {
+            return res.status(409).json({ mensaje: 'El email ya está registrado' });
         }
-    });
+
+        const hash = await bcrypt.hash(contrasena, 10);
+
+        const [rolRows] = await db.query('SELECT id_rol FROM roles WHERE nombre_rol = ? LIMIT 1', [rolNombre]);
+        if (!rolRows.length) {
+            return res.status(400).json({ mensaje: `Rol no válido: ${rolNombre}` });
+        }
+        const idRol = rolRows[0].id_rol;
+
+        await db.query(
+            'INSERT INTO usuarios (nombre, email, contrasena, id_rol, activo) VALUES (?, ?, ?, ?, 1)',
+            [nombre, email, hash, idRol]
+        );
+
+        return res.status(201).json({ mensaje: 'Usuario registrado correctamente' });
+    } catch (err) {
+        console.error('Error en register:', err);
+        return res.status(500).json({ mensaje: 'Error en el servidor' });
+    }
+});
+
+// POST /api/auth/login
+router.post('/login', async (req, res) => {
+    try {
+        const { email, contrasena } = req.body;
+        if (!email || !contrasena) {
+            return res.status(400).json({ mensaje: 'Faltan credenciales' });
+        }
+
+        const [rows] = await db.query(
+            'SELECT u.id_usuario, u.nombre, u.email, u.contrasena, r.nombre_rol FROM usuarios u INNER JOIN roles r ON r.id_rol = u.id_rol WHERE u.email = ? AND u.activo = 1 LIMIT 1',
+            [email]
+        );
+
+        if (!rows || rows.length === 0) {
+            return res.status(401).json({ mensaje: 'Credenciales incorrectas' });
+        }
+
+        const user = rows[0];
+        const ok = await bcrypt.compare(contrasena, user.contrasena);
+        if (!ok) {
+            return res.status(401).json({ mensaje: 'Credenciales incorrectas' });
+        }
+
+        const payload = { sub: user.id_usuario, email: user.email, rol: user.nombre_rol };
+        const token = jwt.sign(payload, process.env.JWT_SECRET || 'dev_secret', { expiresIn: '8h' });
+
+        return res.json({
+            mensaje: 'Inicio de sesión exitoso',
+            token,
+            usuario: {
+                id_usuario: user.id_usuario,
+                nombre: user.nombre,
+                email: user.email,
+                rol: user.nombre_rol
+            }
+        });
+    } catch (err) {
+        console.error('Error en login:', err);
+        return res.status(500).json({ mensaje: 'Error en el servidor' });
+    }
 });
 
 module.exports = router;
