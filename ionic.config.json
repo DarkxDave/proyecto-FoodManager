@@ -1,0 +1,7 @@
+{
+  "name": "DiauloFood",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}
