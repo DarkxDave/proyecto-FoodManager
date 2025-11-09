@@ -6,7 +6,7 @@ const db = require('../db');
 
 const auth = require('../middleware/auth');
 
-// GET /api/auth/health - diagnóstico rápido
+// GET /api/auth/health – Verifica conexión a la base de datos
 router.get('/health', async (_req, res) => {
     try {
         const [[rolesCountRow]] = await db.query('SELECT COUNT(*) AS roles FROM roles');
