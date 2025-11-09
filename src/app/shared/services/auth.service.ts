@@ -31,6 +31,11 @@ export class AuthService {
     );
   }
 
+  register(nombre: string, email: string, contrasena: string): Observable<{ mensaje: string }>
+  {
+    return this.http.post<{ mensaje: string }>(`${this.baseUrl}/register`, { nombre, email, contrasena });
+  }
+
   getToken(): string | null {
     return localStorage.getItem(this.tokenKey);
   }

@@ -44,13 +44,13 @@ router.get('/me', auth, async (req, res) => {
 // POST /api/auth/register (uso básico para crear usuarios)
 router.post('/register', async (req, res) => {
     try {
-        const { nombre, email, contrasena, rol } = req.body;
+        const { nombre, email, contrasena } = req.body;
         if (!nombre || !email || !contrasena) {
             return res.status(400).json({ mensaje: 'Faltan datos (nombre, email, contrasena)' });
         }
 
-        // Rol por defecto 'usuario'
-        const rolNombre = (rol || 'usuario').toLowerCase();
+        // Forzar siempre rol 'usuario' para registros públicos
+        const rolNombre = 'usuario';
 
         const [exists] = await db.query('SELECT 1 FROM usuarios WHERE email = ? LIMIT 1', [email]);
         if (exists.length > 0) {

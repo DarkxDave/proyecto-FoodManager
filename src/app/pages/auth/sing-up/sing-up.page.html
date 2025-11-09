@@ -1,13 +1,57 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>sing-up</ion-title>
-  </ion-toolbar>
-</ion-header>
+<app-header title="Registro"></app-header>
+<ion-content>
+  <div class="d-flex-center">
+    <form [formGroup]="form" class="auth-form" (ngSubmit)="submit()" (keypress.enter)="submit()">
+      <app-logo></app-logo>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">sing-up</ion-title>
-    </ion-toolbar>
-  </ion-header>
+      <app-custom-input
+        icon="person-circle-outline"
+        [control]="form.controls.nombre"
+        type="text"
+        label="Nombre"
+      ></app-custom-input>
+      <div class="validators" *ngIf="form.controls.nombre.errors && form.controls.nombre.touched">
+        <div *ngIf="form.controls.nombre.errors?.['required']">El nombre es requerido</div>
+        <div *ngIf="form.controls.nombre.errors?.['minlength']">Mínimo 2 caracteres</div>
+      </div>
+
+      <app-custom-input
+        autocomplete="email"
+        icon="mail-outline"
+        [control]="form.controls.email"
+        type="email"
+        label="Correo"
+      ></app-custom-input>
+      <div class="validators" *ngIf="form.controls.email.errors && form.controls.email.touched">
+        <div *ngIf="form.controls.email.errors?.['required']">El correo es requerido</div>
+        <div *ngIf="form.controls.email.errors?.['email']">Ingrese un correo válido</div>
+      </div>
+
+      <app-custom-input
+        icon="lock-closed-outline"
+        [control]="form.controls.contrasena"
+        type="password"
+        label="Contraseña"
+      ></app-custom-input>
+      <div class="validators" *ngIf="form.controls.contrasena.errors && form.controls.contrasena.touched">
+        <div *ngIf="form.controls.contrasena.errors?.['required']">La contraseña es requerida</div>
+        <div *ngIf="form.controls.contrasena.errors?.['minlength']">Mínimo 6 caracteres</div>
+      </div>
+
+      <ion-button expand="block" mode="ios" class="submit" type="submit" [disabled]="form.invalid || loading">
+        Crear cuenta
+      </ion-button>
+
+      <ion-text color="success" *ngIf="successMsg" style="display:block; margin-top:12px; text-align:center;">
+        {{ successMsg }}
+      </ion-text>
+      <ion-text color="danger" *ngIf="errorMsg" style="display:block; margin-top:12px; text-align:center;">
+        {{ errorMsg }}
+      </ion-text>
+
+      <div style="text-align:center; margin-top:14px;">
+        <a routerLink="/auth">¿Ya tienes cuenta? Inicia sesión</a>
+      </div>
+    </form>
+  </div>
 </ion-content>
