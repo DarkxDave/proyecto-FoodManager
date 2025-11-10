@@ -7,6 +7,12 @@ Para poder iniciar el proyecto
 - Para correr servidor necesitas entrar a "cd backend" luego iniciar el backend con node index.js.
 - Para correr front-end necesitas iniciarlo mediante ionic serve.
 
+- Crear un nuevo JWT_SECRET y agregarlo al archivo .env en la carpeta backend. Token Nuevo con el siguiente comando:
+
+Terminal: node (Enter)
+$> require('crypto').randomBytes(64).toString('hex') (Enter)
+- Copiar el token generado y pegarlo en el archivo .env en la variable JWT_SECRET.
+
 ## Cambios realizados
 - Se creó el servidor mediante Express en la carpeta: backend.
 
