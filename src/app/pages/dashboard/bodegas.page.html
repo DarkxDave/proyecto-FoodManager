@@ -1,0 +1,101 @@
+<div class="bodegas-wrapper">
+  <div class="toolbar">
+    <h2 class="title">Bodegas</h2>
+    <div class="toolbar-actions" *ngIf="isAdmin">
+      <ion-button size="small" (click)="iniciarCrear()" color="primary">
+        <ion-icon name="add-circle-outline" slot="start"></ion-icon>
+        Nueva bodega
+      </ion-button>
+    </div>
+  </div>
+
+  <div class="feedback">
+    <ion-text color="danger" *ngIf="error">{{ error }}</ion-text>
+    <ion-text color="success" *ngIf="exito">{{ exito }}</ion-text>
+  </div>
+
+  <div class="filtros">
+    <ion-item lines="none" class="filter-item">
+      <ion-icon name="search" slot="start" class="search-icon"></ion-icon>
+      <ion-input placeholder="Filtrar por nombre" (ionInput)="filtrar($event)"></ion-input>
+    </ion-item>
+  </div>
+
+  <div class="contenido" *ngIf="!cargando; else loadingTpl">
+    <ion-grid class="grid-bodegas" *ngIf="almacenesFiltrados.length; else vacioTpl">
+      <ion-row>
+        <ion-col size="12" sizeMd="6" sizeLg="4" *ngFor="let a of almacenesFiltrados; trackBy: trackById">
+          <ion-card class="bodega-card">
+            <ion-card-header>
+              <ion-card-title>{{ a.nombre }}</ion-card-title>
+              <ion-card-subtitle>{{ a.direccion || 'Sin dirección' }}</ion-card-subtitle>
+            </ion-card-header>
+            <ion-card-content>
+              <div class="card-actions">
+                <ion-button size="small" color="tertiary" [routerLink]="['/dashboard/bodegas', a.id_almacen]">
+                  <ion-icon name="analytics-outline" slot="start"></ion-icon>
+                  Ver analítica
+                </ion-button>
+                <ion-button *ngIf="isAdmin" size="small" color="medium" (click)="iniciarEditar(a)">
+                  <ion-icon name="create-outline" slot="start"></ion-icon>
+                  Editar
+                </ion-button>
+                <ion-button *ngIf="isAdmin" size="small" color="danger" (click)="eliminar(a)">
+                  <ion-icon name="trash-outline" slot="start"></ion-icon>
+                  Eliminar
+                </ion-button>
+              </div>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </div>
+
+  <ng-template #loadingTpl>
+    <div class="loading-center">
+      <ion-spinner></ion-spinner>
+    </div>
+  </ng-template>
+
+  <ng-template #vacioTpl>
+    <div class="empty">
+      <ion-icon name="cube-outline"></ion-icon>
+      <p>No hay bodegas que coincidan.</p>
+    </div>
+  </ng-template>
+
+  <!-- Formulario crear / editar -->
+  <ion-modal [isOpen]="creando && isAdmin" (didDismiss)="cancelar()">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>{{ editId ? 'Editar bodega' : 'Nueva bodega' }}</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="cancelar()">Cerrar</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="ion-padding">
+        <form [formGroup]="form" (ngSubmit)="guardar()" class="form-bodega">
+          <ion-item>
+            <ion-label position="floating">Nombre</ion-label>
+            <ion-input formControlName="nombre"></ion-input>
+          </ion-item>
+          <div class="validators" *ngIf="form.controls.nombre.errors && form.controls.nombre.touched">
+            <ion-text color="danger" *ngIf="form.controls.nombre.errors?.['required']">Requerido</ion-text>
+            <ion-text color="danger" *ngIf="form.controls.nombre.errors?.['minlength']">Mínimo 2 caracteres</ion-text>
+          </div>
+          <ion-item>
+            <ion-label position="floating">Dirección</ion-label>
+            <ion-input formControlName="direccion"></ion-input>
+          </ion-item>
+          <div class="form-actions">
+            <ion-button type="submit" [disabled]="form.invalid">Guardar</ion-button>
+            <ion-button fill="clear" color="medium" type="button" (click)="cancelar()">Cancelar</ion-button>
+          </div>
+        </form>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+</div>

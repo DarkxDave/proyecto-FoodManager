@@ -1,0 +1,51 @@
+<div class="dashboard" *ngIf="almacenId">
+  <ion-spinner *ngIf="loading"></ion-spinner>
+  <ion-text color="danger" *ngIf="error">{{ error }}</ion-text>
+  <div *ngIf="data">
+    <div class="cards">
+      <ion-card class="kpi">
+        <ion-card-content>
+          <h3>{{ data.counts.productosTotal }} Productos</h3>
+          <p>{{ data.counts.categoriasTotal }} Categorías</p>
+          <p>{{ data.counts.itemsTotal }} Items en stock</p>
+        </ion-card-content>
+      </ion-card>
+      <ion-card class="capacity">
+        <ion-card-header><ion-card-title>Capacidad</ion-card-title></ion-card-header>
+        <ion-card-content *ngIf="data.capacity.usedPct !== null">
+          <div class="pie">
+            <div class="slice used" [style.--pct]="data.capacity.usedPct"></div>
+          </div>
+          <p>Usado {{ (data.capacity.usedPct*100) | number:'1.0-0' }}% / Libre {{ (data.capacity.freePct*100) | number:'1.0-0' }}%</p>
+        </ion-card-content>
+        <ion-card-content *ngIf="data.capacity.usedPct === null">
+          <p>Sin capacidad máxima definida.</p>
+        </ion-card-content>
+      </ion-card>
+      <ion-card class="categorias">
+        <ion-card-header><ion-card-title>Categorías</ion-card-title></ion-card-header>
+        <ion-card-content>
+          <div class="bars">
+            <div class="bar" *ngFor="let c of data.categorias">
+              <div class="fill" [style.width.%]="c.pct*100"></div>
+              <span>{{ c.nombre }} ({{ c.cantidad }})</span>
+            </div>
+          </div>
+        </ion-card-content>
+      </ion-card>
+    </div>
+    <div class="lists">
+      <ion-card>
+        <ion-card-header><ion-card-title>Bajo stock</ion-card-title></ion-card-header>
+        <ion-card-content>
+          <ion-list *ngIf="data.lowStock.length; else noneLow">
+            <ion-item *ngFor="let p of data.lowStock">
+              <ion-label>{{ p.nombre }} - {{ p.cantidad }}/{{ p.stock_minimo }}</ion-label>
+            </ion-item>
+          </ion-list>
+          <ng-template #noneLow><p>Sin alertas.</p></ng-template>
+        </ion-card-content>
+      </ion-card>
+    </div>
+  </div>
+</div>

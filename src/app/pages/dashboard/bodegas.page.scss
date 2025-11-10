@@ -1,0 +1,18 @@
+.bodegas-wrapper { padding: 8px; }
+.toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom: 12px; }
+.title { margin: 0; }
+.toolbar-actions { display:flex; gap:8px; }
+.feedback { min-height: 20px; margin-bottom: 8px; }
+.filtros { margin-bottom: 8px; }
+.filter-item { --background: var(--ion-color-light); border-radius: 8px; }
+.search-icon { color: var(--ion-color-medium); }
+.contenido { min-height: 120px; }
+.grid-bodegas { width: 100%; }
+.bodega-card { height: 100%; display:flex; flex-direction: column; }
+.card-actions { display:flex; flex-wrap: wrap; gap:8px; margin-top: 8px; }
+.loading-center { display:flex; align-items:center; justify-content:center; padding: 24px; }
+.empty { text-align:center; color: var(--ion-color-medium); padding: 24px; }
+.empty ion-icon { font-size: 42px; margin-bottom: 8px; }
+.form-bodega { display:flex; flex-direction: column; gap: 8px; }
+.validators { margin: 2px 8px; font-size: 12px; }
+.form-actions { display:flex; gap: 8px; margin-top: 8px; }

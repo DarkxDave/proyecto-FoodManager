@@ -1,0 +1,9 @@
+.cards { display:flex; flex-wrap:wrap; gap:12px; }
+.kpi, .capacity, .categorias { flex:1 1 240px; }
+.lists { margin-top:16px; }
+.bars { display:flex; flex-direction:column; gap:6px; }
+.bar { position:relative; background:#f1f1f1; border-radius:4px; overflow:hidden; padding:4px 8px; font-size:12px; }
+.bar .fill { position:absolute; top:0; left:0; bottom:0; background:#4d9cd3; opacity:0.3; }
+.pie { width:120px; height:120px; border-radius:50%; background:conic-gradient(#4d9cd3 calc(var(--used,0)*1%), #9ed3e9 0); position:relative; }
+.pie .slice.used { display:none; }
+[style*='--pct'] { --used: calc(var(--pct) * 100); }
