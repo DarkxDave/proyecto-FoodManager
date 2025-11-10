@@ -1,0 +1,16 @@
+<div class="sidebar" [class.collapsed]="collapsed">
+  <div class="sidebar-header">
+    <strong *ngIf="!collapsed">Admin</strong>
+    <ion-button fill="clear" size="small" (click)="collapsed = !collapsed">
+      <ion-icon [name]="collapsed ? 'chevron-forward-outline' : 'chevron-back-outline'"></ion-icon>
+    </ion-button>
+  </div>
+  <nav>
+    <ion-list>
+      <ion-item button *ngFor="let link of visibleLinks()" (click)="go(link.path)">
+        <ion-icon slot="start" [name]="link.icon"></ion-icon>
+        <ion-label *ngIf="!collapsed">{{ link.label }}</ion-label>
+      </ion-item>
+    </ion-list>
+  </nav>
+</div>

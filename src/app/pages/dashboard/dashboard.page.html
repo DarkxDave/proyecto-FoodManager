@@ -1,6 +1,11 @@
 <app-header title="Dashboard"></app-header>
-<ion-content class="ion-padding">
-  <h2>Bienvenido</h2>
-  <p>Acceso concedido. Aquí irá el contenido protegido.</p>
-  <ion-button routerLink="/auth" color="medium" fill="clear">Cerrar sesión</ion-button>
+<ion-content class="dashboard-wrapper">
+  <div class="layout">
+    <app-admin-sidebar [role]="userRole"></app-admin-sidebar>
+    <div class="main">
+      <h2>Bienvenido</h2>
+      <p>Acceso concedido. Aquí irá el contenido protegido.</p>
+      <ion-button routerLink="/auth" color="medium" fill="clear">Cerrar sesión</ion-button>
+    </div>
+  </div>
 </ion-content>
