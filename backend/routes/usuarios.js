@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../db');
 const auth = require('../middleware/auth');
 const bcrypt = require('bcryptjs');
+const { validarCrearUsuario, validarActualizarUsuario, validarId, validarPaginacion } = require('../middleware/validacion');
 
 /**
  * Helper: verificar si el usuario tiene rol admin
@@ -16,7 +17,7 @@ function isAdmin(user) {
  * Listar usuarios con paginación y filtros
  * Solo admin
  */
-router.get('/', auth, async (req, res) => {
+router.get('/', auth, validarPaginacion, async (req, res) => {
   if (!isAdmin(req.user)) {
     return res.status(403).json({ mensaje: 'Solo administradores pueden listar usuarios' });
   }
@@ -129,7 +130,7 @@ router.get('/:id', auth, async (req, res) => {
  * Crear nuevo usuario
  * Solo admin
  */
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, validarCrearUsuario, async (req, res) => {
   if (!isAdmin(req.user)) {
     return res.status(403).json({ mensaje: 'Solo administradores pueden crear usuarios' });
   }
@@ -137,8 +138,8 @@ router.post('/', auth, async (req, res) => {
   try {
     const { nombre, email, telefono, contrasena, id_rol } = req.body;
 
-    if (!nombre || !email || !contrasena || !id_rol) {
-      return res.status(400).json({ mensaje: 'Faltan datos (nombre, email, contrasena, id_rol)' });
+    if (!id_rol) {
+      return res.status(400).json({ mensaje: 'Faltan datos (id_rol)' });
     }
 
     // Verificar que el email no exista
@@ -173,7 +174,7 @@ router.post('/', auth, async (req, res) => {
  * Actualizar usuario (nombre, email, telefono, activo)
  * Solo admin
  */
-router.put('/:id', auth, async (req, res) => {
+router.put('/:id', auth, validarActualizarUsuario, async (req, res) => {
   if (!isAdmin(req.user)) {
     return res.status(403).json({ mensaje: 'Solo administradores pueden actualizar usuarios' });
   }
@@ -288,7 +289,7 @@ router.put('/:id/rol', auth, async (req, res) => {
  * Eliminar usuario (lógico: activo = 0)
  * Solo admin
  */
-router.delete('/:id', auth, async (req, res) => {
+router.delete('/:id', auth, validarId, async (req, res) => {
   if (!isAdmin(req.user)) {
     return res.status(403).json({ mensaje: 'Solo administradores pueden eliminar usuarios' });
   }

@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../db');
 const auth = require('../middleware/auth');
 const jwt = require('jsonwebtoken');
+const { validarCrearOrden } = require('../middleware/validacion');
 
 // GET /api/ordenes/pendientes - próximos despachos
 router.get('/pendientes', auth, async (req, res) => {
@@ -55,7 +56,7 @@ router.get('/borrador', auth, async (req, res) => {
 module.exports = router;
 
 // POST /api/ordenes - crear borrador de orden de compra (solo admin)
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, validarCrearOrden, async (req, res) => {
   try {
     const user = req.user || {};
     const rol = String(user.rol || '').toLowerCase();
@@ -64,9 +65,6 @@ router.post('/', auth, async (req, res) => {
     }
 
     const { id_proveedor, codigo, subtotal, impuestos, total, fecha } = req.body;
-    if (!id_proveedor || subtotal == null || impuestos == null || total == null) {
-      return res.status(400).json({ mensaje: 'Faltan datos (id_proveedor, subtotal, impuestos, total)' });
-    }
     const fechaVal = fecha ? new Date(fecha) : new Date();
 
     const [result] = await db.query(

@@ -1,24 +1,22 @@
-<div class="usuarios-wrapper">
-  <div class="toolbar">
-    <h2>Gestión de Usuarios</h2>
-    <ion-button (click)="abrirModalCrear()" color="primary">
-      <ion-icon name="person-add-outline" slot="start"></ion-icon>
-      Crear Usuario
-    </ion-button>
-  </div>
+<ion-content [fullscreen]="true">
+  <div class="usuarios-wrapper">
+    <div class="toolbar">
+      <h2>Gestión de Usuarios</h2>
+      <ion-button (click)="abrirModalCrear()" color="primary">
+        <ion-icon name="person-add-outline" slot="start"></ion-icon>
+        Crear Usuario
+      </ion-button>
+    </div>
 
   <!-- Filtros -->
   <div class="filtros">
     <ion-searchbar 
       [formControl]="busqueda"
-      (ionInput)="buscar()"
-      placeholder="Buscar por nombre o email..."
-      debounce="300">
+      placeholder="Buscar por nombre o email...">
     </ion-searchbar>
 
     <ion-select 
       [formControl]="rolFiltro"
-      (ionChange)="buscar()"
       placeholder="Filtrar por rol"
       interface="popover">
       <ion-select-option value="">Todos los roles</ion-select-option>
@@ -30,8 +28,32 @@
 
   <ion-text color="danger" *ngIf="error">{{ error }}</ion-text>
 
-  <div *ngIf="cargando" class="loading-center">
-    <ion-spinner></ion-spinner>
+  <!-- Loading Skeletons -->
+  <div class="tabla-container" *ngIf="cargando">
+    <table class="usuarios-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Email</th>
+          <th>Teléfono</th>
+          <th>Rol</th>
+          <th>Estado</th>
+          <th>Fecha Registro</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let i of [1,2,3,4,5]">
+          <td><ion-skeleton-text animated style="width: 80%"></ion-skeleton-text></td>
+          <td><ion-skeleton-text animated style="width: 90%"></ion-skeleton-text></td>
+          <td><ion-skeleton-text animated style="width: 60%"></ion-skeleton-text></td>
+          <td><ion-skeleton-text animated style="width: 50%"></ion-skeleton-text></td>
+          <td><ion-skeleton-text animated style="width: 50%"></ion-skeleton-text></td>
+          <td><ion-skeleton-text animated style="width: 70%"></ion-skeleton-text></td>
+          <td><ion-skeleton-text animated style="width: 60%"></ion-skeleton-text></td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 
   <!-- Tabla de usuarios -->
@@ -94,7 +116,8 @@
       Siguiente
     </ion-button>
   </div>
-</div>
+  </div>
+</ion-content>
 
 <!-- Modal CRUD -->
 <ion-modal [isOpen]="mostrarModal" (didDismiss)="cerrarModal()">

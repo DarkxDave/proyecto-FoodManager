@@ -1,6 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { UsuariosService, Usuario, Rol, CrearUsuarioDto, ActualizarUsuarioDto } from 'src/app/shared/services/usuarios.service';
+import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
+import { ToastController, AlertController } from '@ionic/angular';
 
 @Component({
   selector: 'app-usuarios',
@@ -8,7 +10,9 @@ import { UsuariosService, Usuario, Rol, CrearUsuarioDto, ActualizarUsuarioDto } 
   styleUrls: ['./usuarios.page.scss'],
   standalone: false
 })
-export class UsuariosPage implements OnInit {
+export class UsuariosPage implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
+  
   usuarios: Usuario[] = [];
   roles: Rol[] = [];
   cargando = false;
@@ -38,11 +42,40 @@ export class UsuariosPage implements OnInit {
     activo: new FormControl(true)
   });
 
-  constructor(private usuariosService: UsuariosService) {}
+  constructor(
+    private usuariosService: UsuariosService,
+    private toastCtrl: ToastController,
+    private alertCtrl: AlertController
+  ) {}
 
   ngOnInit() {
+    // Debounce en búsqueda
+    this.busqueda.valueChanges.pipe(
+      debounceTime(500),
+      distinctUntilChanged(),
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
+      this.paginaActual = 1;
+      this.cargarUsuarios();
+    });
+
+    // Debounce en filtro de rol
+    this.rolFiltro.valueChanges.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
+      this.paginaActual = 1;
+      this.cargarUsuarios();
+    });
+
     this.cargarUsuarios();
     this.cargarRoles();
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   cargarUsuarios() {
@@ -79,11 +112,6 @@ export class UsuariosPage implements OnInit {
     });
   }
 
-  buscar() {
-    this.paginaActual = 1;
-    this.cargarUsuarios();
-  }
-
   cambiarPagina(direccion: number) {
     this.paginaActual += direccion;
     this.cargarUsuarios();
@@ -118,11 +146,18 @@ export class UsuariosPage implements OnInit {
     this.usuarioForm.reset();
   }
 
-  guardarUsuario() {
+  async guardarUsuario() {
     if (this.usuarioForm.invalid) {
       Object.keys(this.usuarioForm.controls).forEach(key => {
         this.usuarioForm.get(key)?.markAsTouched();
       });
+      const toast = await this.toastCtrl.create({
+        message: 'Por favor completa todos los campos requeridos',
+        duration: 2500,
+        color: 'warning',
+        position: 'bottom'
+      });
+      toast.present();
       return;
     }
 
@@ -137,25 +172,55 @@ export class UsuariosPage implements OnInit {
       };
 
       this.usuariosService.actualizar(this.usuarioSeleccionado.id_usuario, dto).subscribe({
-        next: (response) => {
+        next: async (response) => {
           // Actualizar rol si cambió
           if (formValue.id_rol !== this.usuarioSeleccionado!.id_rol) {
             this.usuariosService.cambiarRol(this.usuarioSeleccionado!.id_usuario, formValue.id_rol!).subscribe({
-              next: () => {
+              next: async () => {
                 this.cerrarModal();
                 this.cargarUsuarios();
+                const toast = await this.toastCtrl.create({
+                  message: 'Usuario actualizado correctamente',
+                  duration: 2000,
+                  color: 'success',
+                  position: 'bottom'
+                });
+                toast.present();
               },
-              error: (err) => {
-                this.error = err.error?.mensaje || 'Error al cambiar rol';
+              error: async (err) => {
+                const errorMsg = err.error?.mensaje || 'Error al cambiar rol';
+                this.error = errorMsg;
+                const toast = await this.toastCtrl.create({
+                  message: errorMsg,
+                  duration: 3000,
+                  color: 'danger',
+                  position: 'bottom'
+                });
+                toast.present();
               }
             });
           } else {
             this.cerrarModal();
             this.cargarUsuarios();
+            const toast = await this.toastCtrl.create({
+              message: 'Usuario actualizado correctamente',
+              duration: 2000,
+              color: 'success',
+              position: 'bottom'
+            });
+            toast.present();
           }
         },
-        error: (err) => {
-          this.error = err.error?.mensaje || 'Error al actualizar usuario';
+        error: async (err) => {
+          const errorMsg = err.error?.mensaje || 'Error al actualizar usuario';
+          this.error = errorMsg;
+          const toast = await this.toastCtrl.create({
+            message: errorMsg,
+            duration: 3000,
+            color: 'danger',
+            position: 'bottom'
+          });
+          toast.present();
         }
       });
     } else {
@@ -168,28 +233,71 @@ export class UsuariosPage implements OnInit {
       };
 
       this.usuariosService.crear(dto).subscribe({
-        next: (response) => {
+        next: async (response) => {
           this.cerrarModal();
           this.cargarUsuarios();
+          const toast = await this.toastCtrl.create({
+            message: 'Usuario creado correctamente',
+            duration: 2000,
+            color: 'success',
+            position: 'bottom'
+          });
+          toast.present();
         },
-        error: (err) => {
-          this.error = err.error?.mensaje || 'Error al crear usuario';
+        error: async (err) => {
+          const errorMsg = err.error?.mensaje || 'Error al crear usuario';
+          this.error = errorMsg;
+          const toast = await this.toastCtrl.create({
+            message: errorMsg,
+            duration: 3000,
+            color: 'danger',
+            position: 'bottom'
+          });
+          toast.present();
         }
       });
     }
   }
 
-  confirmarEliminar(usuario: Usuario) {
-    if (confirm(`¿Estás seguro de eliminar al usuario ${usuario.nombre}?`)) {
-      this.usuariosService.eliminar(usuario.id_usuario).subscribe({
-        next: (response) => {
-          this.cargarUsuarios();
-        },
-        error: (err) => {
-          this.error = err.error?.mensaje || 'Error al eliminar usuario';
+  async confirmarEliminar(usuario: Usuario) {
+    const alert = await this.alertCtrl.create({
+      header: 'Confirmar',
+      message: `¿Estás seguro de eliminar al usuario ${usuario.nombre}?`,
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Eliminar',
+          role: 'destructive',
+          handler: () => {
+            this.usuariosService.eliminar(usuario.id_usuario).subscribe({
+              next: async (response) => {
+                this.cargarUsuarios();
+                const toast = await this.toastCtrl.create({
+                  message: 'Usuario eliminado correctamente',
+                  duration: 2000,
+                  color: 'success',
+                  position: 'bottom'
+                });
+                toast.present();
+              },
+              error: async (err) => {
+                const errorMsg = err.error?.mensaje || 'Error al eliminar usuario';
+                this.error = errorMsg;
+                const toast = await this.toastCtrl.create({
+                  message: errorMsg,
+                  duration: 3000,
+                  color: 'danger',
+                  position: 'bottom'
+                });
+                toast.present();
+              }
+            });
+          }
         }
-      });
-    }
+      ]
+    });
+    
+    await alert.present();
   }
 
   trackById(index: number, item: Usuario): number {

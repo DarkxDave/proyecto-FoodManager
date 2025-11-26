@@ -6,16 +6,29 @@
         <ion-icon name="add-circle-outline" slot="start"></ion-icon>
         Nuevo Producto
       </ion-button>
+      <ion-button *ngIf="isAdmin" color="secondary" (click)="descargarExcel()" [disabled]="exportando">
+        <ion-icon name="download-outline" slot="start"></ion-icon>
+        {{ exportando ? 'Generando...' : 'Descargar Excel' }}
+      </ion-button>
       <ion-item lines="none" class="filter-item">
         <ion-icon name="search" slot="start"></ion-icon>
-        <ion-input placeholder="Buscar por nombre, SKU o código" [formControl]="q" (ionChange)="buscar()"></ion-input>
+        <ion-input placeholder="Buscar por nombre, SKU o código" [formControl]="q"></ion-input>
       </ion-item>
 
     </div>
 
     <ion-text color="danger" *ngIf="error">{{ error }}</ion-text>
 
-    <div *ngIf="cargando" class="loading-center"><ion-spinner></ion-spinner></div>
+    <!-- Loading Skeletons -->
+    <ion-list *ngIf="cargando">
+      <ion-item *ngFor="let i of [1,2,3,4,5]">
+        <ion-label>
+          <h3><ion-skeleton-text animated style="width: 60%"></ion-skeleton-text></h3>
+          <p><ion-skeleton-text animated style="width: 80%"></ion-skeleton-text></p>
+          <p><ion-skeleton-text animated style="width: 40%"></ion-skeleton-text></p>
+        </ion-label>
+      </ion-item>
+    </ion-list>
 
     <ion-list *ngIf="!cargando">
       <ion-item *ngFor="let p of data; trackBy: trackById" class="producto-item">

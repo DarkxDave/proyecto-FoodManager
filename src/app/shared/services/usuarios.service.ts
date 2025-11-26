@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { shareReplay } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 
 export interface Rol {
@@ -49,6 +50,7 @@ export interface ActualizarUsuarioDto {
 })
 export class UsuariosService {
   private baseUrl = environment.apiBaseUrl + '/api/usuarios';
+  private rolesCache$?: Observable<Rol[]>;
 
   constructor(private http: HttpClient) {}
 
@@ -89,6 +91,11 @@ export class UsuariosService {
   }
 
   listarRoles(): Observable<Rol[]> {
-    return this.http.get<Rol[]>(`${this.baseUrl}/roles/list`);
+    if (!this.rolesCache$) {
+      this.rolesCache$ = this.http.get<Rol[]>(`${this.baseUrl}/roles/list`).pipe(
+        shareReplay({ bufferSize: 1, refCount: true })
+      );
+    }
+    return this.rolesCache$;
   }
 }

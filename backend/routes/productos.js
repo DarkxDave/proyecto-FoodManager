@@ -1,6 +1,7 @@
 const express = require('express');
 const db = require('../db');
 const auth = require('../middleware/auth');
+const { validarCrearProducto, validarActualizarProducto, validarId, validarPaginacion } = require('../middleware/validacion');
 
 const router = express.Router();
 
@@ -10,7 +11,7 @@ function hasRole(user, roles = []) {
 }
 
 // GET /api/productos - listado paginado + filtros
-router.get('/', auth, async (req, res) => {
+router.get('/', auth, validarPaginacion, async (req, res) => {
   try {
     const page = Math.max(parseInt(req.query.page) || 1, 1);
     const limit = Math.min(Math.max(parseInt(req.query.limit) || 50, 1), 200);
@@ -51,7 +52,7 @@ router.get('/', auth, async (req, res) => {
 });
 
 // GET /api/productos/:id - detalle
-router.get('/:id', auth, async (req, res) => {
+router.get('/:id', auth, validarId, async (req, res) => {
   try {
     const { id } = req.params;
     const [rows] = await db.query(
@@ -66,15 +67,12 @@ router.get('/:id', auth, async (req, res) => {
 });
 
 // POST /api/productos - crear (admin, editor)
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, validarCrearProducto, async (req, res) => {
   try {
     if (!hasRole(req.user, ['admin', 'editor'])) {
       return res.status(403).json({ mensaje: 'Sin permisos' });
     }
     const { sku, codigo_barras, nombre, id_categoria, id_proveedor, unidad, costo, precio, impuesto, descripcion, stock_minimo, stock_maximo } = req.body;
-    if (!sku || !nombre || precio == null || costo == null) {
-      return res.status(400).json({ mensaje: 'Faltan datos (sku, nombre, costo, precio)' });
-    }
     try {
       await db.query(
         `INSERT INTO productos (sku, codigo_barras, nombre, id_categoria, id_proveedor, unidad, costo, precio, impuesto, descripcion, activo, stock_minimo, stock_maximo)
@@ -96,14 +94,13 @@ router.post('/', auth, async (req, res) => {
 });
 
 // PUT /api/productos/:id - actualizar (admin, editor)
-router.put('/:id', auth, async (req, res) => {
+router.put('/:id', auth, validarActualizarProducto, async (req, res) => {
   try {
     if (!hasRole(req.user, ['admin', 'editor'])) {
       return res.status(403).json({ mensaje: 'Sin permisos' });
     }
     const { id } = req.params;
     const { sku, codigo_barras, nombre, id_categoria, id_proveedor, unidad, costo, precio, impuesto, descripcion, stock_minimo, stock_maximo, activo } = req.body;
-    if (!nombre) return res.status(400).json({ mensaje: 'Nombre requerido' });
     try {
       const [result] = await db.query(
         `UPDATE productos SET sku = ?, codigo_barras = ?, nombre = ?, id_categoria = ?, id_proveedor = ?, unidad = COALESCE(?, unidad), costo = ?, precio = ?, impuesto = COALESCE(?, 0), descripcion = ?, stock_minimo = COALESCE(?, stock_minimo), stock_maximo = ?, activo = COALESCE(?, activo)
@@ -126,7 +123,7 @@ router.put('/:id', auth, async (req, res) => {
 });
 
 // DELETE /api/productos/:id - borrado lógico (admin, editor)
-router.delete('/:id', auth, async (req, res) => {
+router.delete('/:id', auth, validarId, async (req, res) => {
   try {
     if (!hasRole(req.user, ['admin', 'editor'])) {
       return res.status(403).json({ mensaje: 'Sin permisos' });

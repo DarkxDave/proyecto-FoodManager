@@ -13,10 +13,8 @@ export class AdminSidebarComponent {
 
   links = [
     { icon: 'storefront-outline', label: 'Bodegas', path: '/dashboard/bodegas', roles: ['admin'] },
-    { icon: 'grid-outline', label: 'Góndolas', path: '/dashboard/gondolas', roles: ['admin'] },
     { icon: 'cart-outline', label: 'Pedidos', path: '/dashboard/pedidos', roles: ['admin','usuario'] },
     { icon: 'cube-outline', label: 'Productos', path: '/dashboard/productos', roles: ['admin','editor','visualizador','usuario'] },
-    { icon: 'notifications-outline', label: 'Alertas de Stock', path: '/dashboard/alertas', roles: ['admin','editor','visualizador'] },
     { icon: 'people-outline', label: 'Usuarios', path: '/dashboard/usuarios', roles: ['admin'] }
   ];
 

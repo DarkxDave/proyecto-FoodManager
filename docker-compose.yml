@@ -15,14 +15,17 @@ services:
       - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
-      - ./backend/database/supermercado.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./backend/database/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./backend/database/seed_productos.sql:/docker-entrypoint-initdb.d/02-seed_productos.sql:ro
+      - ./backend/database/seed_pedidos_despachos.sql:/docker-entrypoint-initdb.d/03-seed_pedidos.sql:ro
     networks:
       - app-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
 
   # Backend Node.js + Express
   backend:
@@ -36,8 +39,10 @@ services:
       DB_USER: ${DB_USER:-admin}
       DB_PASSWORD: ${DB_PASSWORD:-adminpassword}
       DB_NAME: ${DB_NAME:-supermercado}
+      DB_PORT: 3306
       PORT: 3000
-      JWT_SECRET: ${JWT_SECRET:-change-this-in-production}
+      JWT_SECRET: ${JWT_SECRET:-change-this-in-production-use-openssl-rand-hex-64}
+      NODE_ENV: production
     ports:
       - "3000:3000"
     depends_on:
@@ -46,8 +51,7 @@ services:
     networks:
       - app-network
     volumes:
-      - ./backend:/app
-      - /app/node_modules
+      - backend_exports:/app/exports
 
   # Frontend Angular + Ionic
   frontend:
@@ -62,6 +66,8 @@ services:
       - backend
     networks:
       - app-network
+    environment:
+      API_BASE_URL: http://backend:3000
 
 networks:
   app-network:
@@ -69,4 +75,6 @@ networks:
 
 volumes:
   db_data:
+    driver: local
+  backend_exports:
     driver: local

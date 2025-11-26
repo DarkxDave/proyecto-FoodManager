@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const db = require('../db');
 
 const auth = require('../middleware/auth');
+const { validarLogin, validarRegistro } = require('../middleware/validacion');
 
 // GET /api/auth/health – Verifica conexión a la base de datos
 router.get('/health', async (_req, res) => {
@@ -42,12 +43,9 @@ router.get('/me', auth, async (req, res) => {
 });
 
 // POST /api/auth/register (uso básico para crear usuarios)
-router.post('/register', async (req, res) => {
+router.post('/register', validarRegistro, async (req, res) => {
     try {
         const { nombre, email, contrasena } = req.body;
-        if (!nombre || !email || !contrasena) {
-            return res.status(400).json({ mensaje: 'Faltan datos (nombre, email, contrasena)' });
-        }
 
         // Forzar siempre rol 'usuario' para registros públicos
         const rolNombre = 'usuario';
@@ -78,12 +76,9 @@ router.post('/register', async (req, res) => {
 });
 
 // POST /api/auth/login
-router.post('/login', async (req, res) => {
+router.post('/login', validarLogin, async (req, res) => {
     try {
         const { email, contrasena } = req.body;
-        if (!email || !contrasena) {
-            return res.status(400).json({ mensaje: 'Faltan credenciales' });
-        }
 
         const [rows] = await db.query(
             'SELECT u.id_usuario, u.nombre, u.email, u.contrasena, r.nombre_rol FROM usuarios u INNER JOIN roles r ON r.id_rol = u.id_rol WHERE u.email = ? AND u.activo = 1 LIMIT 1',

@@ -1,8 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { ProductosService, Producto, ProductosResponse } from 'src/app/shared/services/productos.service';
+import { ReportesService } from '../../../shared/services/reportes.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from 'src/environments/environment';
+import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
+import { ToastController, AlertController } from '@ionic/angular';
 
 @Component({
   selector: 'app-productos',
@@ -10,7 +13,9 @@ import { environment } from 'src/environments/environment';
   styleUrls: ['./productos.page.scss'],
   standalone: false
 })
-export class ProductosPage {
+export class ProductosPage implements OnDestroy {
+  private destroy$ = new Subject<void>();
+  
   cargando = false;
   error: string | null = null;
   data: Producto[] = [];
@@ -21,6 +26,7 @@ export class ProductosPage {
   q = new FormControl('');
   isAdminOrEditor = false;
   isAdmin = false;
+  exportando = false;
 
   // Modal crear producto
   mostrarModal = false;
@@ -41,7 +47,13 @@ export class ProductosPage {
     id_proveedor: new FormControl<number | null>(null)
   });
 
-  constructor(private svc: ProductosService, private http: HttpClient) {
+  constructor(
+    private svc: ProductosService, 
+    private reportes: ReportesService, 
+    private http: HttpClient,
+    private toastCtrl: ToastController,
+    private alertCtrl: AlertController
+  ) {
     this.http.get<any>(`${environment.apiBaseUrl}/api/auth/me`).subscribe({
       next: u => {
         const r = (u?.rol || '').toLowerCase();
@@ -50,7 +62,23 @@ export class ProductosPage {
       },
       error: () => { this.isAdminOrEditor = false; this.isAdmin = false; }
     });
+    
+    // Debounce en búsqueda
+    this.q.valueChanges.pipe(
+      debounceTime(500),
+      distinctUntilChanged(),
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
+      this.page = 1;
+      this.cargar();
+    });
+    
     this.cargar();
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   cargar() {
@@ -59,10 +87,6 @@ export class ProductosPage {
       next: (res: ProductosResponse) => { this.data = res.data; this.total = res.pagination.total; this.totalPages = res.pagination.totalPages; this.cargando = false; },
       error: e => { this.error = e?.error?.mensaje || 'Error al cargar'; this.cargando = false; }
     });
-  }
-
-  buscar() {
-    this.page = 1; this.cargar();
   }
 
   siguiente() { if (this.page < this.totalPages) { this.page++; this.cargar(); } }
@@ -87,10 +111,17 @@ export class ProductosPage {
 
   
 
-  guardarProducto() {
+  async guardarProducto() {
     if (!this.isAdminOrEditor) { return; }
     if (this.crearForm.invalid) {
       Object.keys(this.crearForm.controls).forEach(k => this.crearForm.get(k)?.markAsTouched());
+      const toast = await this.toastCtrl.create({
+        message: 'Por favor completa todos los campos requeridos',
+        duration: 2500,
+        color: 'warning',
+        position: 'bottom'
+      });
+      toast.present();
       return;
     }
     const v = this.crearForm.value;
@@ -111,13 +142,57 @@ export class ProductosPage {
     this.cargando = true; this.error = null;
     if (this.modoEdicion && this.productoEditando) {
       this.svc.actualizar(this.productoEditando.id_producto, dto).subscribe({
-        next: () => { this.cargando = false; this.cerrarModal(); this.cargar(); },
-        error: err => { this.cargando = false; this.error = err?.error?.mensaje || 'Error al actualizar producto'; }
+        next: async () => { 
+          this.cargando = false; 
+          this.cerrarModal(); 
+          this.cargar();
+          const toast = await this.toastCtrl.create({
+            message: 'Producto actualizado correctamente',
+            duration: 2000,
+            color: 'success',
+            position: 'bottom'
+          });
+          toast.present();
+        },
+        error: async (err) => { 
+          this.cargando = false; 
+          const errorMsg = err?.error?.mensaje || 'Error al actualizar producto';
+          this.error = errorMsg;
+          const toast = await this.toastCtrl.create({
+            message: errorMsg,
+            duration: 3000,
+            color: 'danger',
+            position: 'bottom'
+          });
+          toast.present();
+        }
       });
     } else {
       this.svc.crear(dto).subscribe({
-        next: () => { this.cargando = false; this.cerrarModal(); this.cargar(); },
-        error: err => { this.cargando = false; this.error = err?.error?.mensaje || 'Error al crear producto'; }
+        next: async () => { 
+          this.cargando = false; 
+          this.cerrarModal(); 
+          this.cargar();
+          const toast = await this.toastCtrl.create({
+            message: 'Producto creado correctamente',
+            duration: 2000,
+            color: 'success',
+            position: 'bottom'
+          });
+          toast.present();
+        },
+        error: async (err) => { 
+          this.cargando = false; 
+          const errorMsg = err?.error?.mensaje || 'Error al crear producto';
+          this.error = errorMsg;
+          const toast = await this.toastCtrl.create({
+            message: errorMsg,
+            duration: 3000,
+            color: 'danger',
+            position: 'bottom'
+          });
+          toast.present();
+        }
       });
     }
   }
@@ -143,13 +218,69 @@ export class ProductosPage {
     this.mostrarModal = true;
   }
 
-  eliminarProducto(p: Producto) {
+  async eliminarProducto(p: Producto) {
     if (!this.isAdminOrEditor) { return; }
-    if (!confirm(`¿Eliminar producto ${p.nombre}?`)) { return; }
-    this.cargando = true; this.error = null;
-    this.svc.eliminar(p.id_producto).subscribe({
-      next: () => { this.cargando = false; this.cargar(); },
-      error: err => { this.cargando = false; this.error = err?.error?.mensaje || 'Error al eliminar producto'; }
+    
+    const alert = await this.alertCtrl.create({
+      header: 'Confirmar',
+      message: `¿Eliminar producto ${p.nombre}?`,
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Eliminar',
+          role: 'destructive',
+          handler: () => {
+            this.cargando = true; this.error = null;
+            this.svc.eliminar(p.id_producto).subscribe({
+              next: async () => { 
+                this.cargando = false; 
+                this.cargar();
+                const toast = await this.toastCtrl.create({
+                  message: 'Producto eliminado correctamente',
+                  duration: 2000,
+                  color: 'success',
+                  position: 'bottom'
+                });
+                toast.present();
+              },
+              error: async (err) => { 
+                this.cargando = false; 
+                const errorMsg = err?.error?.mensaje || 'Error al eliminar producto';
+                this.error = errorMsg;
+                const toast = await this.toastCtrl.create({
+                  message: errorMsg,
+                  duration: 3000,
+                  color: 'danger',
+                  position: 'bottom'
+                });
+                toast.present();
+              }
+            });
+          }
+        }
+      ]
+    });
+    
+    await alert.present();
+  }
+
+  descargarExcel() {
+    if (!this.isAdmin) { return; }
+    this.exportando = true; this.error = null;
+    this.reportes.descargarExcel().subscribe({
+      next: (blob: Blob) => {
+        this.exportando = false;
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Productos_${new Date().toISOString().split('T')[0]}.xlsx`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: (err: any) => {
+        this.exportando = false;
+        this.error = err?.error?.mensaje || 'Error descargando Excel';
+      }
     });
   }
 }
