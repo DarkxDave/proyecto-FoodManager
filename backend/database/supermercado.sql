@@ -251,5 +251,7 @@ CREATE TABLE `ventas_detalle` (
 -- --------------------------------------------------------
 INSERT INTO `roles` (`nombre_rol`) VALUES ('admin') ON DUPLICATE KEY UPDATE `nombre_rol` = VALUES(`nombre_rol`);
 INSERT INTO `roles` (`nombre_rol`) VALUES ('usuario') ON DUPLICATE KEY UPDATE `nombre_rol` = VALUES(`nombre_rol`);
+INSERT INTO `roles` (`nombre_rol`) VALUES ('editor') ON DUPLICATE KEY UPDATE `nombre_rol` = VALUES(`nombre_rol`);
+INSERT INTO `roles` (`nombre_rol`) VALUES ('visualizador') ON DUPLICATE KEY UPDATE `nombre_rol` = VALUES(`nombre_rol`);
 
 COMMIT;

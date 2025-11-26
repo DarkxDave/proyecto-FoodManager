@@ -1,17 +1,180 @@
-Para poder iniciar el proyecto
-- Se necesita instalar npm install dotenv jsonwebtoken bcryptjs mysql2 en la carpeta backend.
-- Se necesita instalar npm install en la carpeta principal foodManager.
+# proyecto-FoodManager
 
-- Importar base de datos a motor de su preferencia (xampp, heidisql, etc) 
+Sistema de gestión para supermercado con autenticación JWT, gestión de almacenes, inventario y ventas.
 
-- Para correr servidor necesitas entrar a "cd backend" luego iniciar el backend con node index.js.
-- Para correr front-end necesitas iniciarlo mediante ionic serve.
+## Stack Tecnológico
 
-- Crear un nuevo JWT_SECRET y agregarlo al archivo .env en la carpeta backend. Token Nuevo con el siguiente comando:
+- **Frontend**: Angular 20 + Ionic 8 + TypeScript
+- **Backend**: Node.js + Express 5 + MySQL/MariaDB
+- **Autenticación**: JWT (JSON Web Tokens)
+- **Base de datos**: MySQL 8.0
 
-Terminal: node (Enter)
-$> require('crypto').randomBytes(64).toString('hex') (Enter)
-- Copiar el token generado y pegarlo en el archivo .env en la variable JWT_SECRET.
+## Instalación y Ejecución
+
+### Opción 1: Con Docker (Recomendado)
+
+**Requisitos**: Docker y Docker Compose instalados.
+
+1. Clonar el repositorio y entrar al directorio:
+```bash
+git clone https://github.com/DarkxDave/proyecto-FoodManager.git
+cd proyecto-FoodManager
+```
+
+2. Crear archivo `.env` en la raíz (opcional, ya tiene valores por defecto):
+```env
+DB_ROOT_PASSWORD=rootpassword
+DB_USER=admin
+DB_PASSWORD=adminpassword
+DB_NAME=supermercado
+JWT_SECRET=tu-secreto-jwt-muy-largo-y-aleatorio
+```
+
+3. Levantar todos los servicios:
+```bash
+docker-compose up -d
+```
+
+4. Acceder a la aplicación:
+   - **Frontend**: http://localhost:8080
+   - **Backend API**: http://localhost:3000
+   - **MySQL**: localhost:3306
+
+5. Ver logs en tiempo real:
+```bash
+docker-compose logs -f
+```
+
+6. Detener los servicios:
+```bash
+docker-compose down
+```
+
+### Opción 2: Instalación Local (Sin Docker)
+
+#### Backend
+
+1. Instalar dependencias:
+```bash
+cd backend
+npm install
+```
+
+2. Configurar `.env` (copiar desde `.env.example`):
+```env
+DB_HOST=127.0.0.1
+DB_USER=root
+DB_PASSWORD=
+DB_NAME=supermercado
+PORT=3000
+JWT_SECRET=genera-uno-con-comando-abajo
+```
+
+3. Generar JWT_SECRET seguro:
+```bash
+# Opción 1: Terminal Node
+node
+> require('crypto').randomBytes(64).toString('hex')
+
+# Opción 2: OpenSSL (Linux/Mac/Git Bash)
+openssl rand -hex 64
+
+# Opción 3: PowerShell
+[System.BitConverter]::ToString((New-Object System.Security.Cryptography.RNGCryptoServiceProvider).GetBytes(64)) -replace '-'
+```
+Copiar el token generado y pegarlo en `JWT_SECRET` del archivo `.env`.
+
+4. Crear la base de datos en MySQL:
+```sql
+CREATE DATABASE supermercado CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+```
+
+5. Importar el esquema:
+```bash
+# Desde la raíz del proyecto
+mysql -u root -p supermercado < backend/database/supermercado.sql
+```
+
+6. Iniciar el servidor:
+```bash
+node index.js
+```
+
+#### Frontend
+
+1. Instalar dependencias (desde la raíz):
+```bash
+npm install
+```
+
+2. Configurar `src/environments/environment.ts`:
+```typescript
+export const environment = {
+  production: false,
+  apiBaseUrl: 'http://localhost:3000'
+};
+```
+
+3. Iniciar servidor de desarrollo:
+```bash
+npm start
+# o también: ionic serve
+```
+
+4. Abrir http://localhost:4200
+
+## API Endpoints
+
+### Autenticación (`/api/auth`)
+- `POST /register` - Registro de usuario (rol: usuario)
+- `POST /login` - Inicio de sesión (devuelve JWT)
+- `GET /me` - Datos del usuario autenticado (requiere token)
+- `GET /health` - Estado de la conexión DB
+
+### Almacenes (`/api/almacenes`)
+- `GET /` - Listar almacenes (requiere token)
+- `POST /` - Crear almacén (requiere token + rol admin)
+- `PUT /:id` - Actualizar almacén (requiere token + rol admin)
+- `DELETE /:id` - Eliminar almacén (requiere token + rol admin)
+- `GET /:id/metrics` - Métricas del almacén (requiere token)
+- `GET /:id/sse` - Stream en tiempo real (SSE)
+
+## Autenticación y Roles
+
+- **Registro público**: siempre asigna rol `usuario`
+- **Rol admin**: debe ser asignado manualmente en la base de datos
+- **Token JWT**: incluye payload `{ sub: id_usuario, email, rol }`
+- **Expiración**: 8 horas desde emisión
+
+Para convertir un usuario en admin:
+```sql
+UPDATE usuarios u 
+JOIN roles r ON r.nombre_rol='admin' 
+SET u.id_rol=r.id_rol 
+WHERE u.email='tu@email.com';
+```
+
+## Comandos Docker Útiles
+
+```bash
+# Levantar stack
+docker-compose up -d
+
+# Detener stack
+docker-compose down
+
+# Ver logs
+docker-compose logs -f
+
+# Reiniciar servicios
+docker-compose restart
+
+# Conectar a MySQL dentro del contenedor
+docker-compose exec db mysql -u admin -p
+
+# Reconstruir imágenes
+docker-compose build --no-cache
+```
 
 ## Cambios realizados
 - Se creó el servidor mediante Express en la carpeta: backend.

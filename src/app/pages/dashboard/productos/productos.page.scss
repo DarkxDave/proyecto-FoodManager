@@ -1,0 +1,26 @@
+.productos-content { 
+	--padding-start: 0; 
+	--padding-end: 0; 
+	--padding-top: 0; 
+	--padding-bottom: 0;
+}
+
+.productos-wrapper { padding: 8px; min-height: 100%; }
+.toolbar { display:flex; align-items:center; gap:12px; justify-content:space-between; }
+.filter-item { flex: 1; max-width: 420px; }
+.loading-center { display:flex; align-items:center; justify-content:center; padding: 24px; }
+.paginacion { display:flex; align-items:center; gap:12px; justify-content:center; margin: 12px 0; }
+
+.modal-actions {
+	margin-top: 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.producto-item {
+	--inner-padding-end: 8px;
+	ion-label h3 { font-weight: 600; margin-bottom: 4px; }
+	ion-label p { font-size: 13px; margin: 2px 0; }
+	ion-button { --padding-start: 4px; --padding-end: 4px; }
+}

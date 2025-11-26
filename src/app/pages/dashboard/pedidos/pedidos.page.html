@@ -1,0 +1,45 @@
+<app-header [title]="'Pedidos'" [alertCount]="null"></app-header>
+<ion-content>
+  <div class="grid">
+    <div class="card">
+      <div class="card-header">
+        <h2>Próximos despachos</h2>
+      </div>
+      <ion-list>
+        <ion-item *ngFor="let o of pendientes">
+          <ion-icon name="cube-outline" slot="start"></ion-icon>
+          <ion-label>
+            <h3>{{ o.codigo }}</h3>
+            <p>Proveedor: {{ o.proveedor }}</p>
+          </ion-label>
+          <div slot="end" class="fecha">
+            {{ o.fecha | date:'dd/MM/yy' }}
+            <ion-icon name="information-circle-outline"></ion-icon>
+          </div>
+        </ion-item>
+        <div class="placeholder" *ngIf="!pendientes.length && !cargandoPend">No hay despachos próximos</div>
+        <div class="estado" *ngIf="cargandoPend">Cargando…</div>
+      </ion-list>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2>Pedidos por realizar</h2>
+        <ion-button fill="clear" size="small" aria-label="Agregar" (click)="abrirCrear()">
+          <ion-icon name="add-circle-outline"></ion-icon>
+        </ion-button>
+      </div>
+      <ion-list>
+        <ion-item *ngFor="let o of borrador">
+          <ion-icon name="document-text-outline" slot="start"></ion-icon>
+          <ion-label>
+            <h3>{{ o.codigo }}</h3>
+            <p>Proveedor: {{ o.proveedor }}</p>
+          </ion-label>
+        </ion-item>
+        <div class="placeholder" *ngIf="!borrador.length && !cargandoBorr">Sin pedidos, agrega uno</div>
+        <div class="estado" *ngIf="cargandoBorr">Cargando…</div>
+      </ion-list>
+    </div>
+  </div>
+</ion-content>

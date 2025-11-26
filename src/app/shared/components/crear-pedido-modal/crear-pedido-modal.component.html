@@ -1,0 +1,44 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-title><strong>Nuevo pedido (borrador)</strong></ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="cerrar()"><ion-icon name="close"></ion-icon></ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <form [formGroup]="form" class="form">
+    <ion-item>
+      <ion-label position="stacked">Proveedor</ion-label>
+      <ion-select formControlName="id_proveedor" placeholder="Selecciona proveedor">
+        <ion-select-option *ngFor="let p of proveedores" [value]="p.id_proveedor">{{ p.nombre }}</ion-select-option>
+      </ion-select>
+    </ion-item>
+
+    <ion-item>
+      <ion-label position="stacked">Código (opcional)</ion-label>
+      <ion-input formControlName="codigo"></ion-input>
+    </ion-item>
+
+    <ion-item>
+      <ion-label position="stacked">Subtotal</ion-label>
+      <ion-input type="number" formControlName="subtotal"></ion-input>
+    </ion-item>
+
+    <ion-item>
+      <ion-label position="stacked">Impuestos</ion-label>
+      <ion-input type="number" formControlName="impuestos"></ion-input>
+    </ion-item>
+
+    <ion-item>
+      <ion-label position="stacked">Total</ion-label>
+      <ion-input type="number" formControlName="total"></ion-input>
+    </ion-item>
+
+    <div class="estado" *ngIf="error">{{ error }}</div>
+    <div class="estado ok" *ngIf="okMsg">{{ okMsg }}</div>
+
+    <ion-button expand="block" (click)="guardar()" [disabled]="cargando">Crear</ion-button>
+  </form>
+</ion-content>

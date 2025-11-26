@@ -1,0 +1,36 @@
+<div class="alertas-wrapper">
+  <div class="toolbar">
+    <h2>Alertas de Stock Bajo</h2>
+    <ion-button size="small" (click)="cargar()" fill="outline">
+      <ion-icon name="refresh-outline" slot="start"></ion-icon>
+      Actualizar
+    </ion-button>
+  </div>
+
+  <ion-text color="danger" *ngIf="error">{{ error }}</ion-text>
+
+  <div *ngIf="cargando" class="loading-center">
+    <ion-spinner></ion-spinner>
+  </div>
+
+  <div *ngIf="!cargando && alertas.length === 0" class="empty">
+    <ion-icon name="checkmark-circle-outline" color="success"></ion-icon>
+    <p>No hay productos con stock bajo. ¡Todo en orden!</p>
+  </div>
+
+  <ion-list *ngIf="!cargando && alertas.length > 0">
+    <ion-item *ngFor="let a of alertas; trackBy: trackById" button (click)="verProducto(a.id_producto)">
+      <ion-icon name="warning-outline" color="warning" slot="start"></ion-icon>
+      <ion-label>
+        <h3>{{ a.nombre }}</h3>
+        <p>SKU: {{ a.sku }} · Categoría: {{ a.categoria || 'Sin categoría' }}</p>
+        <p>
+          <ion-badge color="danger">Stock actual: {{ a.stock_actual }}</ion-badge>
+          <ion-badge color="medium">Mínimo requerido: {{ a.stock_minimo }}</ion-badge>
+          <ion-badge color="warning">Faltante: {{ a.stock_minimo - a.stock_actual }}</ion-badge>
+        </p>
+      </ion-label>
+      <ion-icon name="chevron-forward-outline" slot="end"></ion-icon>
+    </ion-item>
+  </ion-list>
+</div>

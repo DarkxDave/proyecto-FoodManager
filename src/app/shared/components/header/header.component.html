@@ -1,8 +1,14 @@
-<ion-header class = "ion-no-border">
-  <ion-toolbar color = "primary">
+<ion-header class="ion-no-border">
+  <ion-toolbar color="primary">
     <ion-title>
-      <strong>{{title}}</strong>
+      <strong>{{ title }}</strong>
       <div class="admin">A D M I N</div>
-     </ion-title>
+    </ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="openAlertasModal()" aria-label="Alertas de stock">
+        <ion-icon name="notifications-outline"></ion-icon>
+        <span class="badge" *ngIf="(alertCount || 0) > 0">{{ alertCount }}</span>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>

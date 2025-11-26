@@ -1,0 +1,191 @@
+<div class="usuarios-wrapper">
+  <div class="toolbar">
+    <h2>Gestión de Usuarios</h2>
+    <ion-button (click)="abrirModalCrear()" color="primary">
+      <ion-icon name="person-add-outline" slot="start"></ion-icon>
+      Crear Usuario
+    </ion-button>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filtros">
+    <ion-searchbar 
+      [formControl]="busqueda"
+      (ionInput)="buscar()"
+      placeholder="Buscar por nombre o email..."
+      debounce="300">
+    </ion-searchbar>
+
+    <ion-select 
+      [formControl]="rolFiltro"
+      (ionChange)="buscar()"
+      placeholder="Filtrar por rol"
+      interface="popover">
+      <ion-select-option value="">Todos los roles</ion-select-option>
+      <ion-select-option *ngFor="let rol of roles" [value]="rol.nombre_rol">
+        {{ rol.nombre_rol }}
+      </ion-select-option>
+    </ion-select>
+  </div>
+
+  <ion-text color="danger" *ngIf="error">{{ error }}</ion-text>
+
+  <div *ngIf="cargando" class="loading-center">
+    <ion-spinner></ion-spinner>
+  </div>
+
+  <!-- Tabla de usuarios -->
+  <div class="tabla-container" *ngIf="!cargando">
+    <table class="usuarios-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Email</th>
+          <th>Teléfono</th>
+          <th>Rol</th>
+          <th>Estado</th>
+          <th>Fecha Registro</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let usuario of usuarios; trackBy: trackById">
+          <td>{{ usuario.nombre }}</td>
+          <td>{{ usuario.email }}</td>
+          <td>{{ usuario.telefono || '-' }}</td>
+          <td>
+            <ion-badge [color]="getRolColor(usuario.rol)">{{ usuario.rol }}</ion-badge>
+          </td>
+          <td>
+            <ion-badge [color]="usuario.activo ? 'success' : 'danger'">
+              {{ usuario.activo ? 'Activo' : 'Inactivo' }}
+            </ion-badge>
+          </td>
+          <td>{{ usuario.created_at | date:'short' }}</td>
+          <td class="acciones">
+            <ion-button size="small" fill="clear" (click)="abrirModalEditar(usuario)">
+              <ion-icon name="create-outline" color="primary"></ion-icon>
+            </ion-button>
+            <ion-button size="small" fill="clear" (click)="confirmarEliminar(usuario)">
+              <ion-icon name="trash-outline" color="danger"></ion-icon>
+            </ion-button>
+          </td>
+        </tr>
+        <tr *ngIf="usuarios.length === 0">
+          <td colspan="7" class="empty-message">No se encontraron usuarios</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Paginación -->
+  <div class="paginacion" *ngIf="!cargando && usuarios.length > 0">
+    <ion-button 
+      (click)="cambiarPagina(-1)" 
+      [disabled]="paginaActual === 1"
+      fill="outline">
+      Anterior
+    </ion-button>
+    <span class="pagina-info">Página {{ paginaActual }} de {{ totalPaginas }} (Total: {{ total }})</span>
+    <ion-button 
+      (click)="cambiarPagina(1)" 
+      [disabled]="paginaActual === totalPaginas"
+      fill="outline">
+      Siguiente
+    </ion-button>
+  </div>
+</div>
+
+<!-- Modal CRUD -->
+<ion-modal [isOpen]="mostrarModal" (didDismiss)="cerrarModal()">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>{{ modoEdicion ? 'Editar Usuario' : 'Crear Usuario' }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="cerrarModal()">Cerrar</ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <form [formGroup]="usuarioForm" (ngSubmit)="guardarUsuario()">
+        <ion-item>
+          <ion-label position="stacked">Nombre *</ion-label>
+          <ion-input 
+            formControlName="nombre" 
+            type="text"
+            placeholder="Nombre completo">
+          </ion-input>
+        </ion-item>
+        <ion-text color="danger" *ngIf="usuarioForm.get('nombre')?.touched && usuarioForm.get('nombre')?.errors?.['required']">
+          <small>El nombre es requerido</small>
+        </ion-text>
+
+        <ion-item>
+          <ion-label position="stacked">Email *</ion-label>
+          <ion-input 
+            formControlName="email" 
+            type="email"
+            placeholder="correo@ejemplo.com">
+          </ion-input>
+        </ion-item>
+        <ion-text color="danger" *ngIf="usuarioForm.get('email')?.touched && usuarioForm.get('email')?.errors?.['required']">
+          <small>El email es requerido</small>
+        </ion-text>
+        <ion-text color="danger" *ngIf="usuarioForm.get('email')?.touched && usuarioForm.get('email')?.errors?.['email']">
+          <small>Email inválido</small>
+        </ion-text>
+
+        <ion-item>
+          <ion-label position="stacked">Teléfono</ion-label>
+          <ion-input 
+            formControlName="telefono" 
+            type="tel"
+            placeholder="+56912345678">
+          </ion-input>
+        </ion-item>
+
+        <ion-item *ngIf="!modoEdicion">
+          <ion-label position="stacked">Contraseña *</ion-label>
+          <ion-input 
+            formControlName="contrasena" 
+            type="password"
+            placeholder="Mínimo 6 caracteres">
+          </ion-input>
+        </ion-item>
+        <ion-text color="danger" *ngIf="!modoEdicion && usuarioForm.get('contrasena')?.touched && usuarioForm.get('contrasena')?.errors?.['required']">
+          <small>La contraseña es requerida</small>
+        </ion-text>
+        <ion-text color="danger" *ngIf="!modoEdicion && usuarioForm.get('contrasena')?.touched && usuarioForm.get('contrasena')?.errors?.['minlength']">
+          <small>La contraseña debe tener al menos 6 caracteres</small>
+        </ion-text>
+
+        <ion-item>
+          <ion-label position="stacked">Rol *</ion-label>
+          <ion-select formControlName="id_rol" placeholder="Seleccionar rol">
+            <ion-select-option *ngFor="let rol of roles" [value]="rol.id_rol">
+              {{ rol.nombre_rol }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
+        <ion-text color="danger" *ngIf="usuarioForm.get('id_rol')?.touched && usuarioForm.get('id_rol')?.errors?.['required']">
+          <small>El rol es requerido</small>
+        </ion-text>
+
+        <ion-item *ngIf="modoEdicion">
+          <ion-label>Activo</ion-label>
+          <ion-toggle formControlName="activo"></ion-toggle>
+        </ion-item>
+
+        <div class="modal-actions">
+          <ion-button expand="block" type="submit" color="primary">
+            {{ modoEdicion ? 'Actualizar' : 'Crear' }}
+          </ion-button>
+          <ion-button expand="block" fill="outline" (click)="cerrarModal()">
+            Cancelar
+          </ion-button>
+        </div>
+      </form>
+    </ion-content>
+  </ng-template>
+</ion-modal>

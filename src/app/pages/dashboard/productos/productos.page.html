@@ -1,0 +1,133 @@
+<ion-content class="productos-content" [fullscreen]="true">
+  <div class="productos-wrapper">
+    <div class="toolbar">
+      <h2>Productos</h2>
+      <ion-button *ngIf="isAdmin" color="primary" (click)="abrirCrearProducto()">
+        <ion-icon name="add-circle-outline" slot="start"></ion-icon>
+        Nuevo Producto
+      </ion-button>
+      <ion-item lines="none" class="filter-item">
+        <ion-icon name="search" slot="start"></ion-icon>
+        <ion-input placeholder="Buscar por nombre, SKU o código" [formControl]="q" (ionChange)="buscar()"></ion-input>
+      </ion-item>
+
+    </div>
+
+    <ion-text color="danger" *ngIf="error">{{ error }}</ion-text>
+
+    <div *ngIf="cargando" class="loading-center"><ion-spinner></ion-spinner></div>
+
+    <ion-list *ngIf="!cargando">
+      <ion-item *ngFor="let p of data; trackBy: trackById" class="producto-item">
+        <ion-label>
+          <h3>{{ p.nombre }}</h3>
+          <p>SKU: {{ p.sku }} · Precio: {{ p.precio | currency:'USD':'symbol':'1.0-2' }}</p>
+          <p>Categoría: {{ p.categoria || 'Sin categoría' }}</p>
+        </ion-label>
+        <ion-button *ngIf="isAdminOrEditor" fill="clear" color="medium" (click)="editarProducto(p)">
+          <ion-icon name="create-outline" slot="icon-only"></ion-icon>
+        </ion-button>
+        <ion-button *ngIf="isAdminOrEditor" fill="clear" color="danger" (click)="eliminarProducto(p)">
+          <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+        </ion-button>
+      </ion-item>
+    </ion-list>
+
+    <div class="paginacion" *ngIf="totalPages > 1">
+      <ion-button (click)="anterior()" [disabled]="page===1">Anterior</ion-button>
+      <span>Página {{ page }} / {{ totalPages }}</span>
+      <ion-button (click)="siguiente()" [disabled]="page===totalPages">Siguiente</ion-button>
+    </div>
+  </div>
+
+  <!-- Modal Crear Producto (solo admin) -->
+  <ion-modal [isOpen]="mostrarModal" (didDismiss)="cerrarModal()">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>{{ modoEdicion ? 'Editar Producto' : 'Nuevo Producto' }}</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="cerrarModal()">Cerrar</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="ion-padding">
+        <form [formGroup]="crearForm" (ngSubmit)="guardarProducto()">
+          <ion-item>
+            <ion-label position="stacked">SKU *</ion-label>
+            <ion-input type="text" formControlName="sku" placeholder="Ej: ARZ-001"></ion-input>
+          </ion-item>
+          <ion-text color="danger" *ngIf="crearForm.get('sku')?.touched && crearForm.get('sku')?.errors?.['required']">SKU requerido</ion-text>
+
+          <ion-item>
+            <ion-label position="stacked">Código de barras</ion-label>
+            <ion-input type="text" formControlName="codigo_barras" placeholder="Ej: 7801000000012"></ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Nombre *</ion-label>
+            <ion-input type="text" formControlName="nombre" placeholder="Nombre del producto"></ion-input>
+          </ion-item>
+          <ion-text color="danger" *ngIf="crearForm.get('nombre')?.touched && crearForm.get('nombre')?.errors?.['required']">Nombre requerido</ion-text>
+
+          <ion-item>
+            <ion-label position="stacked">Unidad *</ion-label>
+            <ion-select formControlName="unidad" placeholder="Selecciona unidad">
+              <ion-select-option value="unidad">Unidad</ion-select-option>
+              <ion-select-option value="kg">Kg</ion-select-option>
+              <ion-select-option value="g">Gramos</ion-select-option>
+              <ion-select-option value="l">Litros</ion-select-option>
+              <ion-select-option value="ml">Mililitros</ion-select-option>
+              <ion-select-option value="pack">Pack</ion-select-option>
+            </ion-select>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Costo *</ion-label>
+            <ion-input type="number" formControlName="costo" placeholder="0"></ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Precio *</ion-label>
+            <ion-input type="number" formControlName="precio" placeholder="0"></ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Impuesto (%)</ion-label>
+            <ion-input type="number" formControlName="impuesto" placeholder="19"></ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Descripción</ion-label>
+            <ion-textarea formControlName="descripcion" placeholder="Descripción del producto"></ion-textarea>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Stock mínimo</ion-label>
+            <ion-input type="number" formControlName="stock_minimo" placeholder="0"></ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Stock máximo</ion-label>
+            <ion-input type="number" formControlName="stock_maximo" placeholder=""></ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Categoría</ion-label>
+            <ion-input type="number" formControlName="id_categoria" placeholder="ID categoría (temporal)"></ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Proveedor</ion-label>
+            <ion-input type="number" formControlName="id_proveedor" placeholder="ID proveedor (temporal)"></ion-input>
+          </ion-item>
+
+          <div class="modal-actions">
+            <ion-button expand="block" type="submit" color="primary">{{ modoEdicion ? 'Actualizar' : 'Crear' }}</ion-button>
+            <ion-button expand="block" fill="outline" (click)="cerrarModal()">Cancelar</ion-button>
+          </div>
+        </form>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+</ion-content>

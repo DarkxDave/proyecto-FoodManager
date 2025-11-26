@@ -1,3 +1,20 @@
 .admin{
     font-size: 13px;
 }
+
+ion-buttons[slot="end"] {
+    position: relative;
+    .badge {
+        position: absolute;
+        top: 4px;
+        right: 0px;
+        background: var(--ion-color-danger);
+        color: #fff;
+        border-radius: 10px;
+        font-size: 11px;
+        padding: 0 6px;
+        line-height: 18px;
+        min-width: 18px;
+        text-align: center;
+    }
+}

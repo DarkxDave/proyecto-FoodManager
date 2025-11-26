@@ -6,6 +6,8 @@ import { LogoComponent } from './components/logo/logo.component';
 import { IonicModule } from '@ionic/angular';
 import { AdminSidebarComponent } from './components/admin-sidebar/admin-sidebar.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { AlertasStockModalComponent } from './components/alertas-stock-modal/alertas-stock-modal.component';
+import { CrearPedidoModalComponent } from './components/crear-pedido-modal/crear-pedido-modal.component';
 
 
 
@@ -14,7 +16,9 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
    HeaderComponent,
    CustomInputComponent,
   LogoComponent,
-  AdminSidebarComponent 
+  AdminSidebarComponent,
+  AlertasStockModalComponent 
+  ,CrearPedidoModalComponent
   ],
   exports: [
    HeaderComponent,

@@ -1,0 +1,14 @@
+node_modules
+npm-debug.log
+dist
+www
+.angular
+.git
+.gitignore
+.env
+.env.local
+.vscode
+*.md
+.editorconfig
+backend/node_modules
+backend/.env

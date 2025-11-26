@@ -1,0 +1,8 @@
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 12px; }
+.card { background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); overflow: hidden; }
+.card-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #eee; }
+.card-header h2 { margin: 0; font-weight: 600; }
+.estado { padding: 12px; color: var(--ion-color-medium); }
+.placeholder { padding: 12px; color: var(--ion-color-medium); }
+ion-item { --min-height: 52px; }
+.fecha { display: flex; align-items: center; gap: 6px; color: var(--ion-color-medium); }
