@@ -35,6 +35,14 @@ backend/node_modules/
 npm-debug.log
 yarn-error.log
 
+# Sensitive files
+backend/google-credentials.json
+backend/.env
+.env
+
+# Exports
+backend/exports/
+
 # IDEs and editors
 .idea/
 .project
